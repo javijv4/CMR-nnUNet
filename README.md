@@ -24,6 +24,14 @@ python -m pip install blosc2 acvl_utils==0.2
 ```
 git clone https://github.com/javijv4/CMR-nnUNet.git
 ```
+5. Set up paths. This step tells the NNUNet where to find and store the models and data that it needs. Detailed instructions on how to do this can be found [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md). For a summary, do the following: 
+* In Linux and MacOS: run the following commands in the terminal (temporal solution) or add them to your .bashrc (Linux) or .zshrc (Max).
+```
+export nnUNet_raw="/media/fabian/nnUNet_raw"
+export nnUNet_preprocessed="/media/fabian/nnUNet_preprocessed"
+export nnUNet_results="/media/fabian/nnUNet_results"
+```
+* In Windows: follow the steps described for Windows [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md).   
 
 
 ## Installing pretrained models from .zip files
