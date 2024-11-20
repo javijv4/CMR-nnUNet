@@ -26,7 +26,7 @@ git clone https://github.com/javijv4/CMR-nnUNet.git
 ```
 5. Set up paths. This step tells the NNUNet where to find and store the models and data that it needs. Detailed instructions on how to do this can be found [here](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md). For a summary, do the following:
    
-a. Create a folder for the NNUNet.
+a. Create a folder for the NNUNet. This can have any name and be placed wherever you want. The important thing is to save the path. 
 
 b. Set up paths:
 
