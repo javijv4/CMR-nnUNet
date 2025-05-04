@@ -1,1 +1,4 @@
 *.zip
+work/
+raw_data/
+datasets/
