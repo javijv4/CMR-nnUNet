@@ -36,7 +36,7 @@ with PdfPages('nn_data/output_images.pdf') as pdf:
             seg_path = f'{scan_fldr}/{view.upper()}_seg.nii.gz'
             label_found[view] = False
             try:
-                img = nib.load(seg_path)
+                img = nib.load(img_path)
                 imgs[view] = img
                 img_found += 1
             except FileNotFoundError:
