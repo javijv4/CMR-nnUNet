@@ -42,6 +42,10 @@ for view in imgs_name.keys():
 
 
     frames = np.where(np.sum(seg, axis=(0, 1, 2)) > 0)[0]
+    # Check there are only two frames
+    if len(frames) != 2:
+        print(f'WARNING: {view} has {len(frames)} frames. Please check the segmentation.')
+        print(f'frames: {frames}')
 
     for frame in frames:
         slices = np.where(np.sum(seg[:, :, :, frame], axis=(0, 1)) > 0)[0]
