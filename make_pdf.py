@@ -19,12 +19,12 @@ from glob import glob
 
 views = ['sa', '2ch', '3ch', '4ch']
 
-folders = glob('scan*')
-folders = sorted(folders, key=lambda x: int(x[4:]))
+folders = glob('nn_data/scan*')
+folders = sorted(folders, key=lambda x: int(x[-3:]))
 
-with PdfPages('output_images.pdf') as pdf:
+with PdfPages('nn_data/output_images.pdf') as pdf:
     for scan_fldr in tqdm(folders):
-        i = int(scan_fldr[4:])
+        i = int(scan_fldr[-3:])
 
         imgs = {}
         segs = {}
@@ -32,12 +32,12 @@ with PdfPages('output_images.pdf') as pdf:
         img_found = 0
         label_found = {}
         for view in views:
-            img_path = f'{scan_fldr}/{view.upper()}'
-            seg_path = f'{scan_fldr}/{view.upper()}_seg'
+            img_path = f'{scan_fldr}/{view.upper()}.nii.gz'
+            seg_path = f'{scan_fldr}/{view.upper()}_seg.nii.gz'
             label_found[view] = False
             try:
                 img = nib.load(seg_path)
-                imgs[view] = img.get_fdata()
+                imgs[view] = img
                 img_found += 1
             except FileNotFoundError:
                 imgs[view] = None
@@ -65,8 +65,8 @@ with PdfPages('output_images.pdf') as pdf:
         # Count images
         cont = 0
         for view in views:
-            seg = segs[view]
-            if seg is None: continue
+            if segs[view] is None: continue
+            seg = segs[view].get_fdata()
             frames = np.where(np.sum(seg, axis=(0, 1, 2)) > 0)[0]
             for frame in frames:
                 slices = np.where(np.sum(seg[:, :, :, frame], axis=(0, 1)) > 0)[0]
@@ -78,10 +78,9 @@ with PdfPages('output_images.pdf') as pdf:
         axes = axes.flatten()
         idx = 0
         for view in views:
-            img = imgs[view]
-            seg = segs[view]
-
-            if seg is None: continue
+            if segs[view] is None: continue
+            img = imgs[view].get_fdata()
+            seg = segs[view].get_fdata()
 
             frames = np.where(np.sum(seg, axis=(0, 1, 2)) > 0)[0]
 

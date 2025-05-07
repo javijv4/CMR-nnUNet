@@ -119,6 +119,7 @@ if __name__ == "__main__":
     dataset_name = f"Dataset{args.dataset_id:03d}_{args.task_name}"
     labelsTr = join(nnUNet_raw, dataset_name, 'labelsTr')
     preprocessed_folder = join(nnUNet_preprocessed, dataset_name)
+    print(nnUNet_preprocessed)
     maybe_mkdir_p(preprocessed_folder)
     split = create_ACDC_split(labelsTr)
     save_json(split, join(preprocessed_folder, 'splits_final.json'), sort_keys=False)

@@ -15,13 +15,13 @@ from glob import glob
 
 views = ['sa', '2ch', '3ch', '4ch']
 
-folders = glob('scan*')
-folders = sorted(folders, key=lambda x: int(x[4:]))
+folders = glob('nn_data/scan*')
+folders = sorted(folders, key=lambda x: int(x[-3:]))
 
 #%%
 data = []
 for scan_fldr in tqdm(folders):
-    i = int(scan_fldr[4:])
+    i = int(scan_fldr[-3:])
 
     f = open(f'{scan_fldr}/info.txt', 'r')
     lines = f.readlines()
@@ -49,7 +49,7 @@ for scan_fldr in tqdm(folders):
 
 #%%
 # Save data to a CSV file
-with open('data_description.csv', mode='w', newline='') as csv_file:
+with open('nn_data/data_description.csv', mode='w', newline='') as csv_file:
     writer = csv.writer(csv_file)
     writer.writerow(['Scan Folder', 'Info'])  # Write header
     writer.writerows(data)  # Write data rows
