@@ -8,3 +8,4 @@ do
     echo $id $mode $i
     nnUNetv2_train $id $mode $i --npz
 done
+nnUNetv2_find_best_configuration $id -c $mode

@@ -9,7 +9,7 @@ from nnunetv2.paths import nnUNet_raw, nnUNet_preprocessed
 import numpy as np
 
 
-def make_out_dirs(dataset_id: int, task_name="ACDC"):
+def make_out_dirs(dataset_id: int, task_name="SA"):
     dataset_name = f"Dataset{dataset_id:03d}_{task_name}"
 
     out_dir = Path(nnUNet_raw.replace('"', "")) / dataset_name
@@ -25,7 +25,7 @@ def make_out_dirs(dataset_id: int, task_name="ACDC"):
     return out_dir, out_train_dir, out_labels_dir, out_test_dir
 
 
-def create_ACDC_split(labelsTr_folder: str, seed: int = 1234) -> List[dict[str, List]]:
+def create_dataset_split(labelsTr_folder: str, seed: int = 1234) -> List[dict[str, List]]:
     # labelsTr_folder = '/home/isensee/drives/gpu_data_root/OE0441/isensee/nnUNet_raw/nnUNet_raw_remake/Dataset027_ACDC/labelsTr'
     nii_files = nifti_files(labelsTr_folder, join=False)
     patients = np.unique([i[:len('patient000')] for i in nii_files])
@@ -42,7 +42,7 @@ def create_ACDC_split(labelsTr_folder: str, seed: int = 1234) -> List[dict[str, 
 
 
 def copy_files(src_data_folder: Path, train_dir: Path, labels_dir: Path, test_dir: Path):
-    """Copy files from the ACDC dataset to the nnUNet dataset folder. Returns the number of training cases."""
+    """Copy files from the dataset to the nnUNet dataset folder. Returns the number of training cases."""
     patients_train = sorted([f for f in (src_data_folder / "training").iterdir() if f.is_dir()])
     patients_test = sorted([f for f in (src_data_folder / "testing").iterdir() if f.is_dir()])
 
@@ -67,7 +67,7 @@ def copy_files(src_data_folder: Path, train_dir: Path, labels_dir: Path, test_di
     return num_training_cases
 
 
-def convert_acdc(src_data_folder: str, dataset_id=27, task_name="ACDC"):
+def convert_dataset(src_data_folder: str, dataset_id=27, task_name="SA"):
     out_dir, train_dir, labels_dir, test_dir = make_out_dirs(dataset_id=dataset_id, task_name=task_name)
     num_training_cases = copy_files(Path(src_data_folder), train_dir, labels_dir, test_dir)
 
@@ -82,6 +82,13 @@ def convert_acdc(src_data_folder: str, dataset_id=27, task_name="ACDC"):
             "background": 0,
             "LVC": 1,
             "MLV": 2,
+        }
+    elif 'SA' in task_name:
+        labels={
+            "background": 0,
+            "LVC": 3,
+            "MLV": 2,
+            "RV": 1,
         }
 
 
@@ -110,18 +117,17 @@ if __name__ == "__main__":
         "-d", "--dataset_id", required=False, type=int, default=44, help="nnU-Net Dataset ID, default: 44"
     )
     parser.add_argument(
-        "-t", "--task_name", required=False, type=str, default="ACDC", help="nnU-Net Task Name, default: ACDC"
+        "-t", "--task_name", required=False, type=str, default="SA", help="nnU-Net Task Name, default: SA"
     )
     args = parser.parse_args()
     print("Converting...")
-    convert_acdc(args.input_folder, args.dataset_id, task_name=args.task_name)
+    convert_dataset(args.input_folder, args.dataset_id, task_name=args.task_name)
 
     dataset_name = f"Dataset{args.dataset_id:03d}_{args.task_name}"
     labelsTr = join(nnUNet_raw, dataset_name, 'labelsTr')
     preprocessed_folder = join(nnUNet_preprocessed, dataset_name)
-    print(nnUNet_preprocessed)
     maybe_mkdir_p(preprocessed_folder)
-    split = create_ACDC_split(labelsTr)
+    split = create_dataset_split(labelsTr)
     save_json(split, join(preprocessed_folder, 'splits_final.json'), sort_keys=False)
 
     print("Done!")

@@ -17,11 +17,14 @@ import shutil
 
 from tqdm import tqdm
 
-scans_fldr = 'raw_data'
+# USER INPUTS
+scans_fldr = '/mnt/raid5/shared/cmrnn/nn_data'
 datasets_fldr = 'datasets'
 
 views = ['SA']
 
+
+# Generate training and testing folders for each view
 for view in views:
     print(f'Processing view {view}...')
     # Create view folder in NN-data
@@ -101,7 +104,7 @@ for view in views:
 
         # Check there are only two frames
         if len(frames) != 2:
-            print(f'Patient folder: {patient_fldr} only has {len(frames)} frsames')
+            print(f'Patient folder: {patient_fldr} has {len(frames)} frames')
             print(f'frames: {frames}')
         
         # Save the frames and gt in NN-data patient folder
