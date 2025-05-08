@@ -18,19 +18,24 @@ import shutil
 from tqdm import tqdm
 
 # USER INPUTS
-scans_fldr = '/mnt/raid5/shared/cmrnn/nn_data'
+scans_fldr = 'nn_data'
 datasets_fldr = 'datasets'
+dump_png = False
 
-views = ['SA']
+views = ['2CH']
 
 
 # Generate training and testing folders for each view
 for view in views:
     print(f'Processing view {view}...')
+
     # Create view folder in NN-data
     if not os.path.exists(f'{datasets_fldr}/{view}'):
         os.makedirs(f'{datasets_fldr}/{view}')
 
+    labels = [0, 1, 2, 3]
+    if view == '2CH':
+        labels = [0, 1, 2]
 
     # Grab all patient folders in LA-JAM
     patient_fldrs = glob.glob(scans_fldr + '/scan*')
@@ -74,7 +79,7 @@ for view in views:
         img_data = img.get_fdata()
 
         # Check that seg_data only contains 0, 1, 2, 3
-        if not np.all(np.isin(np.round(np.unique(seg_data)).astype(int), [0, 1, 2, 3])):
+        if not np.all(np.round(np.unique(seg_data)).astype(int) == labels):
             print(f'Error in patient folder: {patient_fldr}')
             print(f'Unique values in seg_data: {np.unique(seg_data)}')
             continue
@@ -91,16 +96,16 @@ for view in views:
         sum_frames = np.sum(seg_data.reshape(-1, nframes), axis=0)
         frames = np.where(sum_frames > 0)[0]
 
-        # If there are also multiple frames in z, check which one has data and collapse the z dimension
-        # TODO: I should check this is consecutive frames
-        if seg_data.shape[2] > 1:
-            aux = seg_data[..., frames[0]]
-            sum_slices = np.sum(aux.reshape(-1, seg_data.shape[2]), axis=0)
-            slices = np.where(sum_slices > 0)[0]
-            # if len(slices) > 1:
-            #     slices = slices[0]
-            seg_data = seg_data[:, :, slices, :]
-            img_data = img_data[:, :, slices, :]
+        # # If there are also multiple frames in z, check which one has data and collapse the z dimension
+        # # TODO: I should check this is consecutive frames
+        # if seg_data.shape[2] > 1:
+        #     aux = seg_data[..., frames[0]]
+        #     sum_slices = np.sum(aux.reshape(-1, seg_data.shape[2]), axis=0)
+        #     slices = np.where(sum_slices > 0)[0]
+        #     # if len(slices) > 1:
+        #     #     slices = slices[0]
+        #     seg_data = seg_data[:, :, slices, :]
+        #     img_data = img_data[:, :, slices, :]
 
         # Check there are only two frames
         if len(frames) != 2:
@@ -112,27 +117,45 @@ for view in views:
             seg_frame = seg_data[..., frame]
             img_frame = img_data[..., frame]
 
-            # Save seg frame
-            seg_frame = nib.Nifti1Image(seg_frame, np.eye(4))
-            nib.save(seg_frame, f'{datasets_fldr}/{view}/patient{patient_num:03}/patient{patient_num:03}_frame{frame+1:02}_gt.nii.gz')
+            if view == 'SA':
+                # Save all frames
+                seg_frame = nib.Nifti1Image(seg_frame, np.eye(4))
+                nib.save(seg_frame, f'{datasets_fldr}/{view}/patient{patient_num:03}/patient{patient_num:03}_frame{frame+1:02}_gt.nii.gz')
 
-            # Save img frame
-            img_frame = nib.Nifti1Image(img_frame, np.eye(4))
-            nib.save(img_frame, f'{datasets_fldr}/{view}/patient{patient_num:03}/patient{patient_num:03}_frame{frame+1:02}.nii.gz')
+                # Save img frame
+                img_frame = nib.Nifti1Image(img_frame, np.eye(4))
+                nib.save(img_frame, f'{datasets_fldr}/{view}/patient{patient_num:03}/patient{patient_num:03}_frame{frame+1:02}.nii.gz')
 
-            # Plot img with seg overlay and save image to patient folder
+            else:    # 2D data
+                # Check what slices have data
+                slices = np.where(np.sum(seg_frame, axis=(0, 1)) > 0)[0]
+                for slice in slices:
+                    seg_frame_slice = seg_frame[..., slice]
+                    img_frame_slice = img_frame[..., slice]
 
-            # fig, ax = plt.subplots(1, 1, figsize=(8, 8))
-            # ax.imshow(img_frame.get_fdata(), cmap='gray')
-            
-            # # Use transparency and jet colormap for the segmentation
-            # seg_overlay = np.ma.masked_where(seg_frame.get_fdata() == 0, seg_frame.get_fdata())
-            # ax.imshow(seg_overlay, cmap='jet', alpha=0.5)
-            
-            # ax.axis('off')
+                    # Save seg frame
+                    seg_nii = nib.Nifti1Image(seg_frame_slice, np.eye(4))
+                    nib.save(seg_nii, f'{datasets_fldr}/{view}/patient{patient_num:03}/patient{patient_num:03}_frame{frame+1:02}_slice{slice+1:02}_gt.nii.gz')
 
-            # plt.savefig(f'{datasets_fldr}/{view}/patient{patient_num:03}/patient{patient_num:03}_frame{frame+1:02}_overlay.png', bbox_inches='tight', pad_inches=0)
-            # plt.close(fig)
+                    # Save img frame
+                    img_nii = nib.Nifti1Image(img_frame_slice, np.eye(4))
+                    nib.save(img_nii, f'{datasets_fldr}/{view}/patient{patient_num:03}/patient{patient_num:03}_frame{frame+1:02}_slice{slice+1:02}.nii.gz')
+
+
+            if dump_png:
+                # Plot img with seg overlay and save image to patient folder
+
+                fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+                ax.imshow(img_frame.get_fdata(), cmap='gray')
+                
+                # Use transparency and jet colormap for the segmentation
+                seg_overlay = np.ma.masked_where(seg_frame.get_fdata() == 0, seg_frame.get_fdata())
+                ax.imshow(seg_overlay, cmap='jet', alpha=0.5)
+                
+                ax.axis('off')
+
+                plt.savefig(f'{datasets_fldr}/{view}/patient{patient_num:03}/patient{patient_num:03}_frame{frame+1:02}_overlay.png', bbox_inches='tight', pad_inches=0)
+                plt.close(fig)
 
         nn_patient_fldrs.append(patient_folder_path)
 
