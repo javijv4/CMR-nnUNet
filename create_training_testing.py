@@ -22,7 +22,7 @@ scans_fldr = 'nn_data'
 datasets_fldr = 'datasets'
 dump_png = False
 
-views = ['2CH']
+views = ['4CH']
 
 
 # Generate training and testing folders for each view
@@ -79,7 +79,12 @@ for view in views:
         img_data = img.get_fdata()
 
         # Check that seg_data only contains 0, 1, 2, 3
-        if not np.all(np.round(np.unique(seg_data)).astype(int) == labels):
+        seg_labels = np.round(np.unique(seg_data)).astype(int)
+        if len(seg_labels) != len(labels):
+            print(f'Error in patient folder: {patient_fldr}')
+            print(f'Unique values in seg_data: {seg_labels}')
+            continue
+        if not np.all(seg_labels == labels):
             print(f'Error in patient folder: {patient_fldr}')
             print(f'Unique values in seg_data: {np.unique(seg_data)}')
             continue
@@ -130,8 +135,8 @@ for view in views:
                 # Check what slices have data
                 slices = np.where(np.sum(seg_frame, axis=(0, 1)) > 0)[0]
                 for slice in slices:
-                    seg_frame_slice = seg_frame[..., slice]
-                    img_frame_slice = img_frame[..., slice]
+                    seg_frame_slice = np.round(seg_frame[..., slice])
+                    img_frame_slice = np.round(img_frame[..., slice])
 
                     # Save seg frame
                     seg_nii = nib.Nifti1Image(seg_frame_slice, np.eye(4))
